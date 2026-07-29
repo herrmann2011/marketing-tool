@@ -97,6 +97,13 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
 .cov-left label{font-size:12px;color:#555;cursor:pointer;line-height:1.3}
 .cov-level{display:none}
 .cov-level.show{display:inline-block}
+
+/* Crop toggle (Corn / Soybeans) */
+.crop-toggle{display:flex;background:#f5f5f0;border:1px solid #ddd;border-radius:8px;padding:3px;gap:3px;margin-bottom:4px}
+.crop-btn{flex:1;border:none;background:transparent;padding:7px 0;font-size:12px;font-weight:700;letter-spacing:.02em;color:#888;border-radius:6px;cursor:pointer;transition:background .15s,color .15s}
+.crop-btn:hover{color:#5a8a3c}
+.crop-btn.active{background:#5a8a3c;color:#fff}
+.crop-btn.active.is-soy{background:#c98a2b}
 </style>
 </head>
 <body>
@@ -117,6 +124,11 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
     <div class="panel">
       <div class="panel-title">Inputs</div>
 
+      <div class="crop-toggle" id="crop-toggle">
+        <button type="button" class="crop-btn active" data-crop="corn">Corn</button>
+        <button type="button" class="crop-btn" data-crop="soybeans">Soybeans</button>
+      </div>
+
       <div class="section-divider">Location</div>
 
       <div class="input-row">
@@ -132,11 +144,11 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
           <option value="">— Select state first —</option>
         </select>
       </div>
-      <div class="input-row"><span class="input-label">Acres<span class="help-icon">?<span class="help-tip">Input the total number of corn acres in the selected county.</span></span></span><input class="input-val" id="i_ac" type="number" step="1" value="1000"></div>
+      <div class="input-row"><span class="input-label">Acres<span class="help-icon">?<span class="help-tip">Input the total number of acres of the selected crop in the selected county.</span></span></span><input class="input-val" id="i_ac" type="number" step="1" value="1000"></div>
 
       <div class="section-divider" style="margin-top:6px">Farm-Level Variables</div>
 
-      <div class="input-row"><span class="input-label">Spring (Projected) Price<span class="help-icon">?<span class="help-tip">The RMA Projected Price for 2026 corn. Set to $4.62 and not adjustable.</span></span></span><div class="price-wrap" style="background:#eef5e8;border:1px solid #c8ddb8;"><span class="price-prefix" style="color:#2d5a1b;">$</span><input class="price-input" id="i_bp" type="number" step="0.01" value="4.62" readonly style="color:#2d5a1b;font-weight:600;cursor:default;"></div></div>
+      <div class="input-row"><span class="input-label">Spring (Projected) Price<span class="help-icon">?<span class="help-tip">The RMA Projected Price for the 2026 crop year, for the selected crop. Not adjustable.</span></span></span><div class="price-wrap" style="background:#eef5e8;border:1px solid #c8ddb8;"><span class="price-prefix" style="color:#2d5a1b;">$</span><input class="price-input" id="i_bp" type="number" step="0.01" value="4.62" readonly style="color:#2d5a1b;font-weight:600;cursor:default;"></div></div>
       <div class="input-row"><span class="input-label">RP Level<span class="help-icon">?<span class="help-tip">Select the level of Revenue Protection insurance you purchased.</span></span></span><select class="input-val" id="i_rp"><option value="0.50">50%</option><option value="0.55">55%</option><option value="0.60">60%</option><option value="0.65">65%</option><option value="0.70">70%</option><option value="0.75" selected>75%</option><option value="0.80">80%</option><option value="0.85">85%</option></select></div>
       <div class="input-row"><span class="input-label">APH (bu/ac)<span class="help-icon">?<span class="help-tip">Enter your weighted average APH for the selected county.</span></span></span><input class="input-val" id="i_aph" type="number" step="1" value="250"></div>
       <div class="cov-row">
@@ -175,7 +187,7 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
       </div>
 
       <div class="input-row"><span class="input-label">Avg Presold Price<span class="help-icon">?<span class="help-tip">Enter the weighted average presold price of the bushels you sold prior to harvest. Futures price, not cash. If cash price, reflect that in the basis section below.</span></span></span><div class="price-wrap"><span class="price-prefix">$</span><input class="price-input" id="i_pp" type="number" step="0.01" value="4.85"></div></div>
-      <div class="input-row"><span class="input-label">Predicted Average Basis<span class="help-icon">?<span class="help-tip">Enter the predicted weighted average basis for ALL of your corn sales. This includes preharvest and postharvest sales.</span></span></span><div class="price-wrap"><span class="price-prefix">$</span><input class="price-input" id="i_basis" type="number" step="0.01" value="-0.30"></div></div>
+      <div class="input-row"><span class="input-label">Predicted Average Basis<span class="help-icon">?<span class="help-tip">Enter the predicted weighted average basis for ALL of your sales of the selected crop. This includes preharvest and postharvest sales.</span></span></span><div class="price-wrap"><span class="price-prefix">$</span><input class="price-input" id="i_basis" type="number" step="0.01" value="-0.30"></div></div>
 
       <div class="section-divider" style="margin-top:6px">County Yield</div>
 
@@ -184,7 +196,7 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
         <div class="input-val-readonly" id="i_exp_display">—</div>
       </div>
       <div class="input-row">
-        <span class="input-label">Previous Record County Yield<span class="help-icon tip-below">?<span class="help-tip">The highest final county corn yield on record from 2012–2024. Auto-populated from county data when you select a county.</span></span></span>
+        <span class="input-label">Previous Record County Yield<span class="help-icon tip-below">?<span class="help-tip">The highest final county yield on record for the selected crop, from 2012–2025. Auto-populated from county data when you select a county.</span></span></span>
         <div class="input-val-readonly" id="i_rec_display">—</div>
       </div>
       <div class="input-row">
@@ -198,7 +210,7 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
     <div class="matrix-watermark" id="hia-watermark" aria-hidden="true">
       <img alt="" src="https://img1.wsimg.com/isteam/ip/e2c8983a-bdb1-46c2-bda4-5a7ed1f19e32/blob-49a6601.png/:/rs=h:175,m" onerror="this.style.display='none'" />
     </div>
-    <div class="section-head">Net Revenue Sensitivity Matrix ($/ac)</div>
+    <div class="section-head" id="matrix-head">Corn Net Revenue Sensitivity Matrix ($/ac)</div>
     <div style="text-align:center;font-size:13px;color:#000;font-weight:700;margin-bottom:10px;">Harvest Price →</div>
     <div class="matrix-outer">
       <div class="y-label-col">
@@ -239,28 +251,38 @@ p.tool-sub{font-size:12px;color:#888;text-align:center;margin:0;line-height:1.3}
 
 <script>
 // ── County data ──────────────────────────────────────────────
-// yield = 2026 expected county yield (bu/ac, corn)
-// record = highest final county yield 2012–2024 (bu/ac, corn)
+// corn.yield / soy.yield   = 2026 expected county yield (bu/ac)
+// corn.record / soy.record = highest final county yield on record, 2012–2025 (bu/ac)
 const COUNTY_DATA = {
   IL: [
-    { name: "Bureau Co",   yield: 233.9, record: 250.4 },
-    { name: "Fulton Co",   yield: 210.8, record: 227.4 },
-    { name: "Henry Co",    yield: 231.5, record: 238.9 },
-    { name: "Knox Co",     yield: 235.3, record: 239.0 },
-    { name: "Marshall Co", yield: 233.6, record: 237.5 },
-    { name: "McLean Co",   yield: 233.2, record: 249.9 },
-    { name: "Peoria Co",   yield: 229.8, record: 238.1 },
-    { name: "Putnam Co",   yield: 221.6, record: 227.5 },
-    { name: "Stark Co",    yield: 236.8, record: 242.7 },
-    { name: "Tazewell Co", yield: 238.2, record: 252.0 },
-    { name: "Woodford Co", yield: 237.3, record: 241.0 }
+    { name: "Bureau Co",   corn:{yield:233.9, record:250.4}, soy:{yield:69.0, record:72.6} },
+    { name: "Fulton Co",   corn:{yield:210.8, record:229.8}, soy:{yield:65.9, record:70.6} },
+    { name: "Henry Co",    corn:{yield:231.5, record:238.9}, soy:{yield:66.2, record:69.8} },
+    { name: "Knox Co",     corn:{yield:235.3, record:242.2}, soy:{yield:66.7, record:71.4} },
+    { name: "Marshall Co", corn:{yield:233.6, record:241.3}, soy:{yield:68.0, record:74.3} },
+    { name: "McLean Co",   corn:{yield:233.2, record:249.9}, soy:{yield:69.8, record:75.3} },
+    { name: "Peoria Co",   corn:{yield:229.8, record:241.7}, soy:{yield:67.2, record:72.7} },
+    { name: "Putnam Co",   corn:{yield:221.6, record:227.5}, soy:{yield:64.9, record:70.9} },
+    { name: "Stark Co",    corn:{yield:236.8, record:245.0}, soy:{yield:70.6, record:74.5} },
+    { name: "Tazewell Co", corn:{yield:238.2, record:252.0}, soy:{yield:72.7, record:76.5} },
+    { name: "Woodford Co", corn:{yield:237.3, record:245.6}, soy:{yield:69.0, record:75.4} }
   ]
 };
 
-const PRICES=[4.02,4.12,4.22,4.32,4.42,4.52,4.62,4.72,4.82,4.92,5.02,5.12,5.22];
-const YIELDS=[147.5,157.5,167.5,177.5,187.5,197.5,207.5,217.5,227.5,237.5,247.5,257.5,267.5,277.5,287.5,297.5];
+// Per-crop matrix axis ranges and defaults
+const PRICES_CORN=[4.02,4.12,4.22,4.32,4.42,4.52,4.62,4.72,4.82,4.92,5.02,5.12,5.22];
+const YIELDS_CORN=[147.5,157.5,167.5,177.5,187.5,197.5,207.5,217.5,227.5,237.5,247.5,257.5,267.5,277.5,287.5,297.5];
+const PRICES_SOY=[9.84,10.09,10.34,10.59,10.84,11.09,11.34,11.59,11.84,12.09,12.34,12.59,12.84];
+const YIELDS_SOY=[43.5,46.5,49.5,52.5,55.5,58.5,61.5,64.5,67.5,70.5,73.5,76.5,79.5,82.5,85.5,88.5];
 
+const CROP_DEFAULTS = {
+  corn:      { label:"Corn",     springPrice:4.62,  aph:250, presoldAc:175, presoldPrice:4.85,  basis:-0.30 },
+  soybeans:  { label:"Soybeans", springPrice:11.09, aph:65,  presoldAc:45,  presoldPrice:11.50,  basis:-0.35 }
+};
+
+let currentCrop = 'corn';
 let currentExp = null;
+let currentRecord = null;
 
 // ── Presold sync logic ────────────────────────────────────────
 // Flag to prevent recursive updates
@@ -329,15 +351,22 @@ document.getElementById('i_state').addEventListener('change', function(){
 
 // ── County change → populate expected yield ──────────────────
 document.getElementById('i_county').addEventListener('change', function(){
+  refreshCountyExp();
+});
+
+// Reads the currently selected county's yield/record for the active crop
+// and pushes it into setExp(). Called on county change and on crop switch.
+function refreshCountyExp(){
   const state = document.getElementById('i_state').value;
-  const idx = this.value;
+  const idx = document.getElementById('i_county').value;
   if(!state || idx === ''){
     setExp(null, null);
     return;
   }
   const c = COUNTY_DATA[state][idx];
-  setExp(c.yield, c.record);
-});
+  const cd = currentCrop === 'soybeans' ? c.soy : c.corn;
+  setExp(cd.yield, cd.record);
+}
 
 function setExp(val, record){
   currentExp = val;
@@ -419,6 +448,8 @@ function colorFor(v,lo,hi){
 
 function build(){
   if(currentExp === null) return;
+  const PRICES = currentCrop === 'soybeans' ? PRICES_SOY : PRICES_CORN;
+  const YIELDS = currentCrop === 'soybeans' ? YIELDS_SOY : YIELDS_CORN;
   const all=[],data=YIELDS.map(y=>PRICES.map(p=>{const r=calcAll(p,y);all.push(r.total);return r;}));
   const lo=Math.min(...all),hi=Math.max(...all);
   let html='<thead><tr><th style="width:40px"></th>';
@@ -434,6 +465,8 @@ function build(){
   });
   document.getElementById('matrix').innerHTML=html+'</tbody>';
   document._md=data;
+  document._prices=PRICES;
+  document._yields=YIELDS;
   attachHover();
 }
 
@@ -443,7 +476,7 @@ function attachHover(){
   document.querySelectorAll('#matrix td[data-ri]').forEach(td=>{
     td.addEventListener('mouseenter',e=>{
       const r=document._md[+td.dataset.ri][+td.dataset.ci];
-      document.getElementById('tt-head').textContent=`${YIELDS[+td.dataset.ri]} bu/ac  \u00d7  $${PRICES[+td.dataset.ci].toFixed(2)} harvest`;
+      document.getElementById('tt-head').textContent=`${document._yields[+td.dataset.ri]} bu/ac  \u00d7  $${document._prices[+td.dataset.ci].toFixed(2)} harvest`;
       document.getElementById('tt-eco').textContent=fmtD(r.eco);
       document.getElementById('tt-sco').textContent=fmtD(r.sco);
       document.getElementById('tt-rp').textContent=fmtD(r.rp);
@@ -492,6 +525,38 @@ function toggleCoverage(chkId, levelId){
 }
 document.getElementById('i_sco_chk').addEventListener('change', ()=>{ toggleCoverage('i_sco_chk','i_sco'); build(); });
 document.getElementById('i_eco_chk').addEventListener('change', ()=>{ toggleCoverage('i_eco_chk','i_eco'); build(); });
+
+// ── Crop toggle (Corn / Soybeans) ────────────────────────────
+function switchCrop(crop){
+  if(crop === currentCrop) return;
+  currentCrop = crop;
+  const d = CROP_DEFAULTS[crop];
+
+  // Active button styling
+  document.querySelectorAll('.crop-btn').forEach(b=>{
+    const isActive = b.dataset.crop === crop;
+    b.classList.toggle('active', isActive);
+    b.classList.toggle('is-soy', isActive && crop === 'soybeans');
+  });
+
+  // Crop-specific input defaults
+  document.getElementById('i_bp').value = d.springPrice.toFixed(2);
+  document.getElementById('i_aph').value = d.aph;
+  document.getElementById('i_pp').value = d.presoldPrice.toFixed(2);
+  document.getElementById('i_basis').value = d.basis.toFixed(2);
+  document.getElementById('i_presold').value = d.presoldAc;
+  syncPresoldFromAc();
+  updateGuar();
+
+  // Matrix header
+  document.getElementById('matrix-head').textContent = `${d.label} Net Revenue Sensitivity Matrix ($/ac)`;
+
+  // Refresh county yield/record for the newly selected crop, then rebuild matrix
+  refreshCountyExp();
+}
+document.querySelectorAll('.crop-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchCrop(btn.dataset.crop));
+});
 
 // ── Initialize total from defaults ───────────────────────────
 syncPresoldFromAc();
